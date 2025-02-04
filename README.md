@@ -17,4 +17,5 @@ Created a new branch to look into the button logic.
 -add a constructor to initialise the pin so I can remove the pin from setup.
 -the logic of buttons is HARD.  I'm giving up for now.  I will return to this at a later date.  The way the button is programmed is quite clever as the state counter only lets it register a push once.  The held state is useful for holding a button but doesn't really lend itself to extra functionality.
 
-Added SSD2306 support and the web UI elemnts
+-Added SSD1306 support and the web UI elements
+-Initialised SSD1306 display
