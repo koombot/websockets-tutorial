@@ -10,3 +10,8 @@ One of the modifications I am working on is to make the **LED struct** more obje
 - Create a **constructor** for the `LED` object.
 - The constructor will **initialise the pin mode** as an output pin.
 - Allow the LED object to **default to either "on" or "off"** when initialised, making the code more flexible.  If not specified, will default to off.
+
+04.02.2024
+Created a new branch to look into the button logic.
+-establish if the logic can be made easier to read whilst retaining the functionality to distinguish between pressed, held and released
+-add a constructor to initialise the pin so I can remove the pin from setup.
