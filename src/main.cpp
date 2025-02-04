@@ -30,7 +30,7 @@ struct Led {
     uint8_t pin;
     bool    on;
 
-    Led(uint8_t pin, bool on) : pin(pin), on(on) {
+    Led(uint8_t pin, bool on=false) : pin(pin), on(on) {
       pinMode(pin, OUTPUT);
       update();
     }
