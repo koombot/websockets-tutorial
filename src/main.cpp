@@ -10,26 +10,29 @@
 #include "LittleFS.h"
 #include <Adafruit_GFX.h>
 #include "Adafruit_SSD1306.h"
+#include "WiFi.h"
 
 // ----------------------------------------------------------------------------
 // Definition of macros
 // ----------------------------------------------------------------------------
 
-#define greenLedPin 26
+#define GREEN_LED_PIN 26
 #define BTN_PIN 23
 #define LED_BUILTIN 2
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-
 
 // ----------------------------------------------------------------------------
 // Definition of global constants
 // ----------------------------------------------------------------------------
 
 const uint8_t DEBOUNCE_DELAY = 10; // in milliseconds
+
+const char* ssid = "SamberNet";
+const char* password = "Amber1664";
 
 // ----------------------------------------------------------------------------
 // Definition of the LED component will leave as a struct as basically everything will be public.  I need to access the on variable in the loop function.
@@ -101,7 +104,7 @@ struct Button {
 // ----------------------------------------------------------------------------
 // Definition of global variables
 // ----------------------------------------------------------------------------
-Led greenLed(greenLedPin, false);
+Led greenLed(GREEN_LED_PIN, false);
 Led onboardLed (LED_BUILTIN, false);
 Button button = { BTN_PIN, HIGH, 0, 0 };
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -134,15 +137,69 @@ void initOLED() {
         for(;;); // Don't proceed, loop forever
     } 
     else {
-        Serial.println(F("OLED Screen Mounted Successfully!"));
-        display.clearDisplay();
-        display.setTextSize(2);
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(10, 10);
-        display.println("Hello!");
-        display.display();
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.display();
     }
 }
+
+// ----------------------------------------------------------------------------
+// Initialization of Wifi - prints error messages to the OLED if it falls over.
+// ----------------------------------------------------------------------------
+
+
+void connectToWiFi() {
+    WiFi.begin(ssid, password);
+    
+    int attempt = 0;
+    while (WiFi.status() != WL_CONNECTED && attempt < 10) { 
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.print("Connecting");
+        
+        for (int i = 0; i <= attempt % 3; i++) {
+            display.print(".");
+        }
+
+        display.display();
+        Serial.print("Attempt ");
+        Serial.println(attempt + 1);
+        
+        delay(1000);
+        attempt++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.println("Connected!");
+        display.display();
+        Serial.println("Connected!");
+        delay(2000);
+
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.print("IP: ");
+        display.println(WiFi.localIP());
+        display.print("MAC: ");
+        display.println(WiFi.macAddress());
+        display.display();
+
+        Serial.print("IP Address: ");
+        Serial.println(WiFi.localIP());
+        Serial.print("MAC Address: ");
+        Serial.println(WiFi.macAddress());
+    } else {
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.println("Connection Failed!");
+        display.display();
+        Serial.println("Failed to connect to WiFi");
+    }
+}
+
 
 
 // ----------------------------------------------------------------------------
@@ -155,6 +212,7 @@ void setup() {
 
     initLittleFS();
     initOLED();
+    connectToWiFi();
 }
 
 // ----------------------------------------------------------------------------
