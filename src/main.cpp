@@ -115,6 +115,7 @@ Led onboardLed (LED_BUILTIN, false);
 Button button = { BTN_PIN, HIGH, 0, 0 };
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 AsyncWebServer webServer{HTTP_PORT};
+AsyncWebSocket ws("/ws");
 
 // ----------------------------------------------------------------------------
 // Initialization of LittleFS
@@ -245,17 +246,67 @@ void initWebServer() {
 }
 
 // ----------------------------------------------------------------------------
+// WebSocket initialization
+// ----------------------------------------------------------------------------
+
+void notifyClients() {
+    ws.textAll(greenLed.on ? "on" : "off");
+}
+
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+    AwsFrameInfo *info = (AwsFrameInfo*)arg;
+    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+        data[len] = 0;
+        if (strcmp((char*)data, "toggle") == 0) {
+            greenLed.on = !greenLed.on;
+            notifyClients();
+        }
+    }
+}
+
+void onEvent(AsyncWebSocket       *server,
+             AsyncWebSocketClient *client,
+             AwsEventType          type,
+             void                 *arg,
+             uint8_t              *data,
+             size_t                len) {
+
+    switch (type) {
+        case WS_EVT_CONNECT:
+            Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            Serial.printf("WebSocket client #%u disconnected\n", client->id());
+            break;
+        case WS_EVT_DATA:
+            handleWebSocketMessage(arg, data, len);
+            break;
+        case WS_EVT_PONG:
+        case WS_EVT_ERROR:
+            break;
+    }
+}
+
+void initWebSocket() {
+    ws.onEvent(onEvent);
+    webServer.addHandler(&ws);
+}
+
+
+// ----------------------------------------------------------------------------
 // Initialization
 // ----------------------------------------------------------------------------
 
 void setup() {
     pinMode(button.pin, INPUT);
+
     Serial.begin(115200);delay(500);
 
     initLittleFS();
     initOLED();
     connectToWiFi();
     initWebServer();
+    initWebSocket();
 }
 
 // ----------------------------------------------------------------------------
@@ -263,9 +314,14 @@ void setup() {
 // ----------------------------------------------------------------------------
 
 void loop() {
+
+    ws.cleanupClients(); // This line removes any zombie clients from the connection.  Stops the server getting bogged down.
+
     button.read();
 
-    if (button.pressed()) greenLed.on = !greenLed.on;
-
+    if (button.pressed()) {
+        greenLed.on = !greenLed.on;
+        notifyClients(); 
+    }
     greenLed.update();
 }
