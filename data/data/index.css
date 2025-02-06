@@ -46,12 +46,12 @@ h1 {
   height: 5em;
   border: 2px solid #000;
   border-radius: 2.5em;
-  background-image: radial-gradient(farthest-corner at 50% 20%, #b30000 0%, #330000 100%);
-  box-shadow: 0 0.5em 1em rgba(102, 0, 0, 0.3);
+  background-image: radial-gradient(farthest-corner at 50% 20%, #00b300 0%, #003300 100%);
+  box-shadow: 0 0.5em 1em rgba(0, 102, 0, 0.3);
 }
 #led.on {
-  background-image: radial-gradient(farthest-corner at 50% 75%, red 0%, #990000 100%);
-  box-shadow: 0 1em 1.5em rgba(255, 0, 0, 0.5);
+  background-image: radial-gradient(farthest-corner at 50% 75%, green 0%, #009900 100%);
+  box-shadow: 0 1em 1.5em rgba(0, 255, 0, 0.5);
 }
 #led:after {
   content: '';

@@ -19,3 +19,9 @@ Created a new branch to look into the button logic.
 
 -Added SSD1306 support and the web UI elements
 -Initialised SSD1306 display
+
+05.02.2025
+-Added Wifi on main branch.
+-OLED now outputs the Wifi IP address and also does some very basic error messages.  I think I can tidy it up though?
+-Created a Newbranch to configure the webserver.  Got it working and it outputs a message to the display to say that the webserver is available.
+-Website now displays the status of the LED on refresh.  Cannot directly control the LED from my computer though.

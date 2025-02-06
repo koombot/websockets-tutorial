@@ -11,19 +11,25 @@
 #include <Adafruit_GFX.h>
 #include "Adafruit_SSD1306.h"
 #include "WiFi.h"
+#include "ESPAsyncWebServer.h"
 
 // ----------------------------------------------------------------------------
 // Definition of macros
 // ----------------------------------------------------------------------------
 
+//Pin Defines
 #define GREEN_LED_PIN 26
 #define BTN_PIN 23
 #define LED_BUILTIN 2
 
+//OLED Defines
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+
+//Webserver Defines
+#define HTTP_PORT 80
 
 // ----------------------------------------------------------------------------
 // Definition of global constants
@@ -31,8 +37,8 @@
 
 const uint8_t DEBOUNCE_DELAY = 10; // in milliseconds
 
-const char* ssid = "SamberNet";
-const char* password = "Amber1664";
+const char* SSID = "SamberNet";
+const char* PASSWORD = "Amber1664";
 
 // ----------------------------------------------------------------------------
 // Definition of the LED component will leave as a struct as basically everything will be public.  I need to access the on variable in the loop function.
@@ -108,6 +114,7 @@ Led greenLed(GREEN_LED_PIN, false);
 Led onboardLed (LED_BUILTIN, false);
 Button button = { BTN_PIN, HIGH, 0, 0 };
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+AsyncWebServer webServer{HTTP_PORT};
 
 // ----------------------------------------------------------------------------
 // Initialization of LittleFS
@@ -151,7 +158,7 @@ void initOLED() {
 
 
 void connectToWiFi() {
-    WiFi.begin(ssid, password);
+    WiFi.begin(SSID, PASSWORD);
     
     int attempt = 0;
     while (WiFi.status() != WL_CONNECTED && attempt < 10) { 
@@ -183,7 +190,7 @@ void connectToWiFi() {
         display.setCursor(0, 0);
         display.print("IP: ");
         display.println(WiFi.localIP());
-        display.print("MAC: ");
+        display.print("MAC:");
         display.println(WiFi.macAddress());
         display.display();
 
@@ -200,7 +207,42 @@ void connectToWiFi() {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Initialization of WebServer
+// ----------------------------------------------------------------------------
 
+//String Processor (convert %STATE% to 'on' or 'off' depending on the led.on state)
+String processor(const String &var) {
+    return String(var == "STATE" && greenLed.on ? "on" : "off");
+}
+
+void onRootRequest(AsyncWebServerRequest *request) {
+  request->send(LittleFS, "/index.html", "text/html", false, processor);
+}
+
+void initWebServer() {
+    webServer.on("/", onRootRequest);
+    webServer.serveStatic("/", LittleFS, "/");
+    webServer.begin();
+
+    // Small delay to allow the server to start properly
+    delay(100);
+
+    // Check if the server is listening on port 80
+    WiFiClient client;
+    if (client.connect(WiFi.localIP(), 80)) {
+        display.println("Webserver Available!");
+        display.display();
+        Serial.println(F("WebServer Available!"));
+        
+        client.stop();  // Close the test connection
+    } else {
+        display.println("Webserver Failed to Start!");
+        display.display();
+        Serial.println(F("WebServer Failed to initialised"));
+    }
+
+}
 
 // ----------------------------------------------------------------------------
 // Initialization
@@ -213,6 +255,7 @@ void setup() {
     initLittleFS();
     initOLED();
     connectToWiFi();
+    initWebServer();
 }
 
 // ----------------------------------------------------------------------------
